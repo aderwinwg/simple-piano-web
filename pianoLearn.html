@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PianoLearn — Interactive Piano</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #faf8f3;
+  --warm-white: #f5f2ea;
+  --ivory: #fffff0;
+  --ebony: #1a1a1a;
+  --charcoal: #2d2d2d;
+  --gold: #c9a84c;
+  --gold-light: #e8c96a;
+  --gold-dim: #8a6f2e;
+  --muted: #7a7069;
+  --wood: #8b5e3c;
+  --wood-light: #b07d52;
+  --key-white: #fefefe;
+  --key-black: #1c1c1c;
+  --key-pressed-white: #e8c96a;
+  --key-pressed-black: #c9a84c;
+  --panel: #252018;
+  --panel-light: #2e2820;
+  --accent-blue: #4a9eff;
+  --green: #4caf7d;
+  --red: #e05555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ebony);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 2.5rem;
+  background: var(--ebony);
+  border-bottom: 1px solid #333;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+.logo span { color: var(--cream); font-weight: 400; }
+
+.nav-tabs { display: flex; gap: 4px; }
+
+.nav-tab {
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  color: #999;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.18s;
+  text-transform: uppercase;
+}
+
+.nav-tab:hover { color: var(--cream); border-color: #444; }
+.nav-tab.active { background: var(--gold); color: var(--ebony); border-color: var(--gold); }
+
+/* MAIN LAYOUT */
+.app { display: flex; flex-direction: column; min-height: calc(100vh - 58px); }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: flex; flex-direction: column; }
+
+/* ── PLAY PAGE ──────────────────────────────────────────── */
+#page-play { background: var(--ebony); flex: 1; }
+
+.piano-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 0;
+}
+
+/* Info bar */
+.info-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 1.5rem;
+  padding: 10px 24px;
+  background: var(--panel);
+  border-radius: 10px;
+  border: 1px solid #333;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.note-display {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+.note-label {
+  font-size: 0.72rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+
+.octave-info { font-size: 0.8rem; color: #777; }
+
+.kbd-hint {
+  font-size: 0.75rem;
+  color: #555;
+  font-family: 'DM Mono', monospace;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ctrl-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid #444;
+  background: #222;
+  color: #aaa;
+  transition: all 0.15s;
+}
+
+.ctrl-btn:hover { background: #333; color: #fff; }
+.ctrl-btn.active-mode { background: var(--gold); color: var(--ebony); border-color: var(--gold); }
+
+.vol-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vol-group input[type=range] {
+  width: 80px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+/* ── PIANO KEYBOARD ──────────────────────────────────────── */
+.piano-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 18px 32px 0;
+  background: linear-gradient(to bottom, #111 0%, #1a1005 100%);
+  border-radius: 16px 16px 0 0;
+  border: 2px solid #333;
+  border-bottom: none;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.6);
+  width: min(96vw, 900px);
+}
+
+.piano-lid {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 18px;
+  background: #0e0e0e;
+  border-radius: 16px 16px 0 0;
+  border-bottom: 1px solid #2a2005;
+}
+
+.piano-keys {
+  position: relative;
+  display: flex;
+  height: 180px;
+  margin-top: 18px;
+  user-select: none;
+}
+
+/* White keys */
+.key-white {
+  position: relative;
+  width: 42px;
+  height: 180px;
+  background: var(--key-white);
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 10px;
+  transition: background 0.06s;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.key-white:hover { background: #f8f5e6; }
+.key-white.pressed { background: var(--key-pressed-white); }
+.key-white.highlight { background: #d4f0e0; }
+.key-white.wrong { background: #ffd4d4; }
+
+.key-note {
+  font-size: 10px;
+  font-weight: 500;
+  color: #999;
+  letter-spacing: 0.03em;
+}
+
+.key-kbd {
+  font-size: 9px;
+  color: #bbb;
+  font-family: monospace;
+  margin-top: 1px;
+}
+
+/* Black keys */
+.key-black {
+  position: absolute;
+  width: 26px;
+  height: 112px;
+  background: var(--key-black);
+  border-radius: 0 0 4px 4px;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 8px;
+  transition: background 0.06s;
+  border: 1px solid #000;
+  border-top: none;
+}
+
+.key-black:hover { background: #2e2e2e; }
+.key-black.pressed { background: var(--key-pressed-black); }
+.key-black.highlight { background: #2a6644; }
+.key-black.wrong { background: #6b1a1a; }
+
+.key-black .key-note { color: #555; font-size: 9px; }
+.key-black .key-kbd { color: #444; font-size: 8px; }
+
+/* Piano bottom rail */
+.piano-rail {
+  height: 24px;
+  width: min(96vw, 900px);
+  background: linear-gradient(to bottom, #0a0800, #1a1208);
+  border: 2px solid #333;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  margin-bottom: 0;
+}
+
+/* ── SONG PLAYER ─────────────────────────────────────────── */
+.song-bar {
+  margin-top: 1.8rem;
+  padding: 0 1rem 2rem;
+  width: 100%;
+  max-width: 900px;
+}
+
+.song-bar h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  text-align: center;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.song-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.song-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid #3a3020;
+  color: #ccc;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.song-btn:hover { background: #2e2418; border-color: var(--gold-dim); color: var(--gold-light); }
+.song-btn.playing { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+
+/* ── LEARN PAGE ─────────────────────────────────────────── */
+#page-learn {
+  background: var(--cream);
+  padding: 2.5rem 2rem 3rem;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.learn-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.learn-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--ebony);
+  margin-bottom: 0.4rem;
+}
+
+.learn-header p {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Lesson stepper */
+.lesson-stepper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.step-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #aaa;
+  transition: all 0.15s;
+}
+
+.step-dot.done .step-circle { background: var(--green); border-color: var(--green); color: #fff; }
+.step-dot.active .step-circle { background: var(--ebony); border-color: var(--ebony); color: var(--gold); }
+.step-dot:not(.active):not(.done) .step-circle:hover { border-color: var(--gold); color: var(--gold); }
+
+.step-name { font-size: 0.68rem; color: #aaa; text-align: center; max-width: 60px; }
+.step-dot.active .step-name { color: var(--ebony); font-weight: 500; }
+
+.step-line {
+  width: 32px;
+  height: 2px;
+  background: #e0e0e0;
+  margin-top: 17px;
+  flex-shrink: 0;
+}
+
+/* Lesson card */
+.lesson-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e8e0d4;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.lesson-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--ebony);
+}
+
+.lesson-body {
+  font-size: 0.93rem;
+  line-height: 1.75;
+  color: #444;
+  margin-bottom: 1.2rem;
+}
+
+.lesson-body strong { color: var(--ebony); }
+
+/* Note grid for lesson */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin: 1rem 0;
+}
+
+.note-card {
+  background: var(--warm-white);
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.note-card:hover { background: #f0e8d0; border-color: var(--gold); }
+.note-card.note-active { background: var(--gold); border-color: var(--gold-dim); }
+
+.note-card .n-letter {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ebony);
+}
+
+.note-card.note-active .n-letter { color: var(--ebony); }
+
+.note-card .n-label {
+  font-size: 0.68rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* Scale diagram */
+.scale-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.scale-note {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--warm-white);
+  border: 2px solid #ddd;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.scale-note.root { background: var(--ebony); border-color: var(--ebony); color: var(--gold); }
+.scale-note.fifth { background: #e8f4e8; border-color: #4caf7d; color: #2a7a4a; }
+
+.scale-arrow {
+  font-size: 0.7rem;
+  color: #bbb;
+  flex-shrink: 0;
+}
+
+/* Chord diagram */
+.chord-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 1rem 0;
+}
+
+.chord-box {
+  background: var(--warm-white);
+  border: 1px solid #e0d8cc;
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chord-box:hover { background: #f0e8d8; border-color: var(--gold-dim); }
+.chord-box.chord-active { background: #fdf3d8; border-color: var(--gold); }
+
+.chord-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--ebony);
+}
+
+.chord-notes-label {
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.chord-keys-mini {
+  display: flex;
+  gap: 3px;
+}
+
+.mini-white {
+  width: 14px;
+  height: 36px;
+  background: #f5f5f0;
+  border: 1px solid #ccc;
+  border-radius: 0 0 2px 2px;
+}
+
+.mini-white.lit { background: var(--gold-light); border-color: var(--gold); }
+
+.mini-black-wrap {
+  position: relative;
+  width: 0;
+}
+
+.mini-black {
+  position: absolute;
+  top: 0;
+  left: -5px;
+  width: 9px;
+  height: 22px;
+  background: #222;
+  border-radius: 0 0 2px 2px;
+  z-index: 2;
+}
+
+.mini-black.lit { background: var(--gold); }
+
+/* Quiz section */
+.quiz-section {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e8e0d4;
+  padding: 1.5rem 2rem;
+}
+
+.quiz-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.8rem;
+}
+
+.quiz-question {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ebony);
+  margin-bottom: 1rem;
+}
+
+.quiz-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quiz-opt {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: var(--warm-white);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ebony);
+}
+
+.quiz-opt:hover { border-color: var(--gold-dim); background: #f5edd8; }
+.quiz-opt.correct { background: #d4f0e0; border-color: var(--green); color: #1a5c35; }
+.quiz-opt.wrong { background: #ffd4d4; border-color: var(--red); color: #7a1a1a; }
+
+.quiz-feedback {
+  font-size: 0.85rem;
+  margin-top: 0.8rem;
+  min-height: 1.2em;
+  color: var(--muted);
+}
+
+.quiz-feedback.ok { color: var(--green); font-weight: 500; }
+.quiz-feedback.bad { color: var(--red); }
+
+/* lesson nav */
+.lesson-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  gap: 12px;
+}
+
+.lesson-btn {
+  padding: 10px 28px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  color: #666;
+  transition: all 0.15s;
+}
+
+.lesson-btn:hover { border-color: var(--gold-dim); color: var(--ebony); background: var(--warm-white); }
+
+.lesson-btn.primary {
+  background: var(--ebony);
+  color: var(--gold);
+  border-color: var(--ebony);
+}
+
+.lesson-btn.primary:hover { background: #333; }
+
+/* ── PRACTICE PAGE ──────────────────────────────────────── */
+#page-practice {
+  background: var(--cream);
+  padding: 2.5rem 2rem 3rem;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.practice-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.practice-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  margin-bottom: 0.3rem;
+}
+
+.practice-header p { color: var(--muted); font-size: 0.9rem; }
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 2rem;
+}
+
+.practice-card {
+  background: #fff;
+  border: 1px solid #e0d8cc;
+  border-radius: 14px;
+  padding: 1.4rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.practice-card:hover { border-color: var(--gold-dim); background: #fdf9f2; }
+.practice-card.selected { border: 2px solid var(--gold); background: #fdf3d8; }
+
+.practice-card-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+
+.practice-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--ebony);
+}
+
+.practice-card-desc {
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* Ear training */
+.ear-section {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e0d8cc;
+  padding: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.ear-prompt {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--ebony);
+}
+
+.ear-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ear-opt {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: var(--warm-white);
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ebony);
+}
+
+.ear-opt:hover { border-color: var(--gold-dim); background: #f5edd8; }
+.ear-opt.correct { background: #d4f0e0; border-color: var(--green); }
+.ear-opt.wrong { background: #ffd4d4; border-color: var(--red); }
+
+.score-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--warm-white);
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.83rem;
+  color: #666;
+}
+
+.score-val { font-weight: 500; color: var(--ebony); font-size: 1rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Piano<span>Learn</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('play')">Play</button>
+    <button class="nav-tab" onclick="showPage('learn')">Learn</button>
+    <button class="nav-tab" onclick="showPage('practice')">Practice</button>
+  </div>
+</nav>
+
+<div class="app">
+
+<!-- ══════════════ PLAY PAGE ══════════════ -->
+<div id="page-play" class="page active">
+  <div class="piano-stage">
+
+    <div class="info-bar">
+      <div>
+        <div class="note-label">Note</div>
+        <div class="note-display" id="note-display">—</div>
+      </div>
+      <div>
+        <div class="note-label">Keyboard</div>
+        <div class="kbd-hint" id="kbd-display">A S D F G H J · W E T Y U</div>
+      </div>
+      <div>
+        <div class="note-label">Mode</div>
+        <div id="mode-label" style="font-size:0.8rem;color:#aaa;">Free play</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="vol-group">
+        Vol
+        <input type="range" id="vol-slider" min="0" max="100" value="70" step="1">
+      </div>
+      <button class="ctrl-btn" id="btn-sustain" onclick="toggleSustain()">Sustain off</button>
+      <button class="ctrl-btn" id="btn-labels" onclick="toggleLabels()">Labels on</button>
+      <button class="ctrl-btn" id="btn-stop" onclick="stopAll()" style="color:#e05555;border-color:#5a2222;">Stop all</button>
+    </div>
+
+    <div class="piano-wrapper" id="piano-wrapper">
+      <div class="piano-lid"></div>
+      <div class="piano-keys" id="piano-keys"></div>
+    </div>
+    <div class="piano-rail"></div>
+
+    <div class="song-bar">
+      <h3>Demo songs</h3>
+      <div class="song-grid" id="song-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ LEARN PAGE ══════════════ -->
+<div id="page-learn" class="page">
+  <div class="learn-header">
+    <h1>Learn to play piano</h1>
+    <p>Work through the lessons at your own pace. Each one builds on the last.</p>
+  </div>
+
+  <div class="lesson-stepper" id="lesson-stepper"></div>
+
+  <div id="lesson-content"></div>
+</div>
+
+<!-- ══════════════ PRACTICE PAGE ══════════════ -->
+<div id="page-practice" class="page">
+  <div class="practice-header">
+    <h1>Practice</h1>
+    <p>Train your ear and test your note knowledge.</p>
+  </div>
+
+  <div class="practice-grid">
+    <div class="practice-card selected" id="pcard-ear" onclick="selectPractice('ear')">
+      <div class="practice-card-icon">👂</div>
+      <div class="practice-card-title">Ear training</div>
+      <div class="practice-card-desc">Listen to a note and identify it. Great for building relative pitch.</div>
+    </div>
+    <div class="practice-card" id="pcard-flash" onclick="selectPractice('flash')">
+      <div class="practice-card-icon">⚡</div>
+      <div class="practice-card-title">Note flashcards</div>
+      <div class="practice-card-desc">See a note name and find it on the piano as fast as you can.</div>
+    </div>
+    <div class="practice-card" id="pcard-scale" onclick="selectPractice('scale')">
+      <div class="practice-card-icon">🎼</div>
+      <div class="practice-card-title">Scale builder</div>
+      <div class="practice-card-desc">Build major and minor scales from any root note.</div>
+    </div>
+  </div>
+
+  <div id="practice-panel"></div>
+</div>
+
+</div><!-- end .app -->
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+let gainNode = null;
+let masterVol = 0.7;
+let sustainMode = false;
+let labelsOn = true;
+let activeOscillators = {};
+let playMode = 'free';
+let songInterval = null;
+let currentSongBtn = null;
+
+function initAudio() {
+  if (!ctx) {
+    ctx = new AudioCtx();
+    gainNode = ctx.createGain();
+    gainNode.gain.value = masterVol;
+    gainNode.connect(ctx.destination);
+  }
+}
+
+const noteFreqs = {
+  'C3':130.81,'D3':146.83,'E3':164.81,'F3':174.61,'G3':196,'A3':220,'B3':246.94,
+  'C#3':138.59,'D#3':155.56,'F#3':185,'G#3':207.65,'A#3':233.08,
+  'C4':261.63,'D4':293.66,'E4':329.63,'F4':349.23,'G4':392,'A4':440,'B4':493.88,
+  'C#4':277.18,'D#4':311.13,'F#4':369.99,'G#4':415.3,'A#4':466.16,
+  'C5':523.25,'D5':587.33,'E5':659.25,'F5':698.46,'G5':783.99,'A5':880,'B5':987.77,
+  'C#5':554.37,'D#5':622.25,'F#5':739.99,'G#5':830.61,'A#5':932.33
+};
+
+const whiteNotes = [
+  'C3','D3','E3','F3','G3','A3','B3',
+  'C4','D4','E4','F4','G4','A4','B4',
+  'C5','D5','E5','F5','G5','A5','B5'
+];
+
+const blackNotes = {
+  'C#3':0,'D#3':1,'F#3':3,'G#3':4,'A#3':5,
+  'C#4':7,'D#4':8,'F#4':10,'G#4':11,'A#4':12,
+  'C#5':14,'D#5':15,'F#5':17,'G#5':18,'A#5':19
+};
+
+const kbdMap = {
+  'z':'C3','s':'C#3','x':'D3','d':'D#3','c':'E3','v':'F3','g':'F#3','b':'G3','h':'G#3','n':'A3','j':'A#3','m':'B3',
+  'q':'C4','2':'C#4','w':'D4','3':'D#4','e':'E4','r':'F4','5':'F#4','t':'G4','6':'G#4','y':'A4','7':'A#4','u':'B4',
+  'i':'C5','9':'C#5','o':'D5','0':'D#5','p':'E5'
+};
+
+const kbdRevMap = {};
+Object.entries(kbdMap).forEach(([k,v]) => kbdRevMap[v]=k);
+
+function buildPiano() {
+  const container = document.getElementById('piano-keys');
+  const whiteW = 42;
+
+  whiteNotes.forEach((note, idx) => {
+    const key = document.createElement('div');
+    key.className = 'key-white';
+    key.dataset.note = note;
+    key.id = 'key-' + note.replace('#','s');
+    key.innerHTML = `<span class="key-note">${note.replace(/\d/,'')}</span><span class="key-kbd">${kbdRevMap[note]||''}</span>`;
+    key.addEventListener('mousedown', e => { e.preventDefault(); pressKey(note); });
+    key.addEventListener('mouseup', () => releaseKey(note));
+    key.addEventListener('mouseleave', () => { if (!sustainMode) releaseKey(note); });
+    key.addEventListener('touchstart', e => { e.preventDefault(); pressKey(note); }, {passive:false});
+    key.addEventListener('touchend', () => releaseKey(note));
+    container.appendChild(key);
+  });
+
+  Object.entries(blackNotes).forEach(([note, wIdx]) => {
+    const key = document.createElement('div');
+    key.className = 'key-black';
+    key.dataset.note = note;
+    key.id = 'key-' + note.replace('#','s');
+    key.style.left = (wIdx * whiteW + whiteW * 0.62) + 'px';
+    key.innerHTML = `<span class="key-note">${note.replace(/\d/,'').replace('#','♯')}</span><span class="key-kbd">${kbdRevMap[note]||''}</span>`;
+    key.addEventListener('mousedown', e => { e.preventDefault(); pressKey(note); });
+    key.addEventListener('mouseup', () => releaseKey(note));
+    key.addEventListener('mouseleave', () => { if (!sustainMode) releaseKey(note); });
+    key.addEventListener('touchstart', e => { e.preventDefault(); pressKey(note); }, {passive:false});
+    key.addEventListener('touchend', () => releaseKey(note));
+    container.appendChild(key);
+  });
+}
+
+function playNote(note) {
+  initAudio();
+  if (activeOscillators[note]) {
+    activeOscillators[note].gain.cancelScheduledValues(ctx.currentTime);
+    activeOscillators[note].osc.stop();
+    delete activeOscillators[note];
+  }
+  const freq = noteFreqs[note];
+  if (!freq) return;
+
+  const osc = ctx.createOscillator();
+  const env = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = freq;
+
+  const harm = ctx.createOscillator();
+  const harmGain = ctx.createGain();
+  harm.type = 'sine';
+  harm.frequency.value = freq * 2;
+  harmGain.gain.value = 0.08;
+  harm.connect(harmGain);
+  harmGain.connect(gainNode);
+
+  env.gain.setValueAtTime(0, ctx.currentTime);
+  env.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.008);
+  env.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.15);
+
+  osc.connect(env);
+  env.connect(gainNode);
+  osc.start();
+  harm.start();
+
+  activeOscillators[note] = { osc, gain: env, harm, harmGain };
+}
+
+function stopNote(note) {
+  if (!activeOscillators[note]) return;
+  const { osc, gain, harm, harmGain } = activeOscillators[note];
+  gain.gain.cancelScheduledValues(ctx.currentTime);
+  gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+  osc.stop(ctx.currentTime + 0.32);
+  try { harm.stop(ctx.currentTime + 0.32); } catch(e){}
+  delete activeOscillators[note];
+}
+
+function stopAll() {
+  Object.keys(activeOscillators).forEach(n => stopNote(n));
+  document.querySelectorAll('.key-white.pressed,.key-black.pressed').forEach(k => k.classList.remove('pressed'));
+  if (songInterval) { clearInterval(songInterval); songInterval = null; }
+  if (currentSongBtn) { currentSongBtn.classList.remove('playing'); currentSongBtn = null; }
+}
+
+function pressKey(note) {
+  const el = document.getElementById('key-' + note.replace('#','s'));
+  if (el) el.classList.add('pressed');
+  playNote(note);
+  document.getElementById('note-display').textContent = note.replace(/\d/,'').replace('#','♯');
+}
+
+function releaseKey(note) {
+  if (sustainMode) return;
+  const el = document.getElementById('key-' + note.replace('#','s'));
+  if (el) el.classList.remove('pressed');
+  stopNote(note);
+}
+
+function toggleSustain() {
+  sustainMode = !sustainMode;
+  const btn = document.getElementById('btn-sustain');
+  btn.textContent = sustainMode ? 'Sustain on' : 'Sustain off';
+  btn.classList.toggle('active-mode', sustainMode);
+  if (!sustainMode) {
+    document.querySelectorAll('.key-white.pressed,.key-black.pressed').forEach(k => {
+      k.classList.remove('pressed');
+      stopNote(k.dataset.note);
+    });
+  }
+}
+
+function toggleLabels() {
+  labelsOn = !labelsOn;
+  document.querySelectorAll('.key-note,.key-kbd').forEach(el => {
+    el.style.opacity = labelsOn ? '1' : '0';
+  });
+  const btn = document.getElementById('btn-labels');
+  btn.textContent = labelsOn ? 'Labels on' : 'Labels off';
+  btn.classList.toggle('active-mode', labelsOn);
+}
+
+document.getElementById('vol-slider').addEventListener('input', function() {
+  masterVol = this.value / 100;
+  if (gainNode) gainNode.gain.value = masterVol;
+});
+
+document.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+  const note = kbdMap[e.key.toLowerCase()];
+  if (note) pressKey(note);
+});
+
+document.addEventListener('keyup', e => {
+  const note = kbdMap[e.key.toLowerCase()];
+  if (note) releaseKey(note);
+});
+
+/* ── SONGS ─────────────────────────────────────────────── */
+const songs = {
+  'Twinkle Twinkle': [
+    ['C4',400],['C4',400],['G4',400],['G4',400],['A4',400],['A4',400],['G4',800],
+    ['F4',400],['F4',400],['E4',400],['E4',400],['D4',400],['D4',400],['C4',800],
+    ['G4',400],['G4',400],['F4',400],['F4',400],['E4',400],['E4',400],['D4',800],
+    ['G4',400],['G4',400],['F4',400],['F4',400],['E4',400],['E4',400],['D4',800],
+    ['C4',400],['C4',400],['G4',400],['G4',400],['A4',400],['A4',400],['G4',800],
+    ['F4',400],['F4',400],['E4',400],['E4',400],['D4',400],['D4',400],['C4',800],
+  ],
+  'Ode to Joy': [
+    ['E4',400],['E4',400],['F4',400],['G4',400],['G4',400],['F4',400],['E4',400],['D4',400],
+    ['C4',400],['C4',400],['D4',400],['E4',400],['E4',600],['D4',200],['D4',800],
+    ['E4',400],['E4',400],['F4',400],['G4',400],['G4',400],['F4',400],['E4',400],['D4',400],
+    ['C4',400],['C4',400],['D4',400],['E4',400],['D4',600],['C4',200],['C4',800],
+  ],
+  'C Major Scale': [
+    ['C4',300],['D4',300],['E4',300],['F4',300],['G4',300],['A4',300],['B4',300],['C5',500],
+    ['C5',300],['B4',300],['A4',300],['G4',300],['F4',300],['E4',300],['D4',300],['C4',500],
+  ],
+  'Happy Birthday': [
+    ['C4',300],['C4',150],['D4',400],['C4',400],['F4',400],['E4',800],
+    ['C4',300],['C4',150],['D4',400],['C4',400],['G4',400],['F4',800],
+    ['C4',300],['C4',150],['C5',400],['A4',400],['F4',400],['E4',400],['D4',800],
+    ['A#4',300],['A#4',150],['A4',400],['F4',400],['G4',400],['F4',800],
+  ],
+  'Fur Elise (theme)': [
+    ['E5',200],['D#5',200],['E5',200],['D#5',200],['E5',200],['B4',200],['D5',200],['C5',200],
+    ['A4',600],['C4',200],['E4',200],['A4',200],['B4',600],['E4',200],['G#4',200],['B4',200],
+    ['C5',600],['E4',200],['E5',200],['D#5',200],['E5',200],['D#5',200],['E5',200],['B4',200],
+    ['D5',200],['C5',200],['A4',600],
+  ],
+};
+
+function buildSongs() {
+  const grid = document.getElementById('song-grid');
+  Object.keys(songs).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'song-btn';
+    btn.textContent = name;
+    btn.onclick = () => playSong(name, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function playSong(name, btn) {
+  if (songInterval) { clearInterval(songInterval); songInterval = null; }
+  if (currentSongBtn) { currentSongBtn.classList.remove('playing'); }
+  stopAll();
+  if (currentSongBtn === btn) { currentSongBtn = null; return; }
+
+  btn.classList.add('playing');
+  currentSongBtn = btn;
+
+  const sequence = songs[name];
+  let i = 0;
+
+  function playNext() {
+    if (i >= sequence.length) {
+      btn.classList.remove('playing');
+      currentSongBtn = null;
+      return;
+    }
+    const [note, dur] = sequence[i++];
+    document.querySelectorAll('.key-white.pressed,.key-black.pressed').forEach(k => {
+      k.classList.remove('pressed');
+      stopNote(k.dataset.note);
+    });
+    pressKey(note);
+    setTimeout(() => {
+      releaseKey(note);
+      const el = document.getElementById('key-' + note.replace('#','s'));
+      if (el) el.classList.remove('pressed');
+    }, dur * 0.85);
+    setTimeout(playNext, dur);
+  }
+
+  playNext();
+}
+
+/* ══════════ LEARN PAGE ══════════════════════════════════ */
+const lessons = [
+  {
+    title: 'The musical alphabet',
+    content: `Music uses only 7 letter names: <strong>C D E F G A B</strong>. After B, it repeats back to C — but higher. Each repetition is called an <strong>octave</strong>.<br><br>
+The piano arranges these notes from left (low) to right (high). Click any note below to hear it.`,
+    type: 'notes',
+    quiz: {
+      q: 'How many unique letter names are in the musical alphabet?',
+      opts: ['5', '7', '8', '12'],
+      ans: '7',
+      explanation: 'There are 7 letter names: C D E F G A B — then they repeat.'
+    }
+  },
+  {
+    title: 'White keys and black keys',
+    content: `The piano has <strong>white keys</strong> (natural notes: C D E F G A B) and <strong>black keys</strong> (sharps ♯ and flats ♭).<br><br>
+Black keys come in groups of 2 and 3. The white key just to the left of a group of 2 black keys is always <strong>C</strong>. Use this as your anchor.`,
+    type: 'keyboard',
+    quiz: {
+      q: 'The white key just LEFT of a group of 2 black keys is always…',
+      opts: ['A', 'C', 'E', 'G'],
+      ans: 'C',
+      explanation: 'C is always to the left of the two-black-key group. This is your landmark.'
+    }
+  },
+  {
+    title: 'Sharps and flats',
+    content: `A <strong>sharp ♯</strong> raises a note by one half-step (one key to the right). A <strong>flat ♭</strong> lowers it by one half-step (one key to the left).<br><br>
+So C♯ is the black key just to the right of C. D♭ is the same key — just a different name. This is called an <strong>enharmonic equivalent</strong>.`,
+    type: 'scale',
+    notes: ['C4','C#4','D4','D#4','E4','F4','F#4','G4','G#4','A4','A#4','B4','C5'],
+    labels: ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B','C'],
+    quiz: {
+      q: 'C♯ and D♭ are different names for the same key. This is called…',
+      opts: ['Transposition', 'Enharmonic equivalent', 'Modulation', 'Inversion'],
+      ans: 'Enharmonic equivalent',
+      explanation: 'Enharmonic equivalents are notes that sound the same but have different names.'
+    }
+  },
+  {
+    title: 'The C major scale',
+    content: `A <strong>scale</strong> is a set of notes in a specific pattern. The <strong>C major scale</strong> uses only white keys: <strong>C D E F G A B C</strong>.<br><br>
+The pattern is: <em>whole · whole · half · whole · whole · whole · half</em> step.<br>
+A whole step skips one key. A half step moves to the very next key.`,
+    type: 'scale',
+    notes: ['C4','D4','E4','F4','G4','A4','B4','C5'],
+    labels: ['C','D','E','F','G','A','B','C'],
+    quiz: {
+      q: 'The C major scale uses which keys?',
+      opts: ['All white and black keys', 'Only black keys', 'Only white keys C to C', 'C E G B'],
+      ans: 'Only white keys C to C',
+      explanation: 'C major is special — it uses all 7 white keys with no sharps or flats.'
+    }
+  },
+  {
+    title: 'Basic chords',
+    content: `A <strong>chord</strong> is 3 or more notes played together. The most important chord is the <strong>triad</strong> — root, third, fifth.<br><br>
+For C major: play <strong>C + E + G</strong> at the same time. Click the chords below to hear them, then try finding them on the piano.`,
+    type: 'chords',
+    chords: [
+      { name: 'C major', notes: ['C4','E4','G4'], whites: [0,2,4], blacks: [] },
+      { name: 'G major', notes: ['G4','B4','D5'], whites: [4,6,9], blacks: [] },
+      { name: 'F major', notes: ['F4','A4','C5'], whites: [3,5,7], blacks: [] },
+      { name: 'A minor', notes: ['A4','C5','E5'], whites: [5,7,11], blacks: [] },
+      { name: 'D minor', notes: ['D4','F4','A4'], whites: [1,3,5], blacks: [] },
+      { name: 'E minor', notes: ['E4','G4','B4'], whites: [2,4,6], blacks: [] },
+    ],
+    quiz: {
+      q: 'A basic chord (triad) consists of how many notes?',
+      opts: ['2', '3', '4', '5'],
+      ans: '3',
+      explanation: 'A triad has 3 notes: the root, the third, and the fifth.'
+    }
+  },
+  {
+    title: 'Reading rhythm',
+    content: `Music also has <strong>rhythm</strong> — how long each note lasts. The most common note values:<br><br>
+<strong>Whole note</strong> = 4 beats · <strong>Half note</strong> = 2 beats<br>
+<strong>Quarter note</strong> = 1 beat · <strong>Eighth note</strong> = ½ beat<br><br>
+Most beginner songs use a <strong>4/4 time signature</strong> — 4 beats per bar, quarter note gets 1 beat. Tap along to Twinkle Twinkle on the Play page!`,
+    type: 'rhythm',
+    quiz: {
+      q: 'In 4/4 time, how many quarter notes fit in one bar?',
+      opts: ['2', '3', '4', '8'],
+      ans: '4',
+      explanation: 'In 4/4 time, the top number means 4 beats per bar, and the bottom means a quarter note = 1 beat.'
+    }
+  },
+  {
+    title: 'Practice tips',
+    content: `You now know the fundamentals. Here is how to improve quickly:<br><br>
+<strong>1. Slow down</strong> — Learning a piece at 50% speed with accuracy beats fast and sloppy.<br>
+<strong>2. Use a metronome</strong> — Even tapping your foot helps keep time.<br>
+<strong>3. Hands separately first</strong> — Learn the right hand, then left, then combine.<br>
+<strong>4. Repeat small sections</strong> — Isolate the bars that trip you up.<br>
+<strong>5. Play daily</strong> — 15 minutes every day beats 2 hours once a week.`,
+    type: 'text',
+    quiz: {
+      q: 'Which practice habit gives the fastest improvement?',
+      opts: ['2 hours once a week', '15 minutes every day', 'Only playing full songs', 'Skipping difficult sections'],
+      ans: '15 minutes every day',
+      explanation: 'Consistency beats intensity. Daily short practice builds muscle memory far faster.'
+    }
+  }
+];
+
+let currentLesson = 0;
+let completedLessons = new Set();
+let quizAnswered = false;
+
+function buildLearnPage() {
+  buildStepper();
+  renderLesson(currentLesson);
+}
+
+function buildStepper() {
+  const el = document.getElementById('lesson-stepper');
+  el.innerHTML = '';
+  lessons.forEach((l, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i === currentLesson ? ' active' : '') + (completedLessons.has(i) ? ' done' : '');
+    dot.onclick = () => goLesson(i);
+    dot.innerHTML = `<div class="step-circle">${completedLessons.has(i) ? '✓' : (i+1)}</div><div class="step-name">${l.title.split(' ').slice(0,2).join(' ')}</div>`;
+    el.appendChild(dot);
+    if (i < lessons.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'step-line';
+      el.appendChild(line);
+    }
+  });
+}
+
+function goLesson(i) {
+  currentLesson = i;
+  quizAnswered = false;
+  buildStepper();
+  renderLesson(i);
+}
+
+function renderLesson(i) {
+  const l = lessons[i];
+  const el = document.getElementById('lesson-content');
+
+  let bodyHTML = '';
+
+  if (l.type === 'notes') {
+    bodyHTML += `<div class="notes-grid">`;
+    ['C','D','E','F','G','A','B'].forEach(n => {
+      bodyHTML += `<div class="note-card" onclick="playNoteLearn('${n}4',this)"><div class="n-letter">${n}</div><div class="n-label">play</div></div>`;
+    });
+    bodyHTML += `</div>`;
+  }
+
+  if (l.type === 'scale' && l.notes) {
+    bodyHTML += `<div class="scale-row">`;
+    l.notes.forEach((note, j) => {
+      const isRoot = j === 0 || j === l.notes.length - 1;
+      const cls = isRoot ? 'root' : (j === 4 ? 'fifth' : '');
+      bodyHTML += `<div class="scale-note ${cls}" style="cursor:pointer" onclick="pressKey('${note}')">${l.labels[j]}</div>`;
+      if (j < l.notes.length - 1) bodyHTML += `<div class="scale-arrow">→</div>`;
+    });
+    bodyHTML += `</div>`;
+    bodyHTML += `<p style="font-size:0.78rem;color:#999;margin-top:4px;">Click any note to hear it</p>`;
+  }
+
+  if (l.type === 'chords') {
+    bodyHTML += `<div class="chord-grid">`;
+    l.chords.forEach(ch => {
+      const miniKeys = Array.from({length: 8}, (_,k) => {
+        const isLit = ch.whites.includes(k);
+        return `<div class="mini-white${isLit?' lit':''}"></div>`;
+      }).join('');
+      bodyHTML += `<div class="chord-box" onclick="playChord(${JSON.stringify(ch.notes)},this)">
+        <div class="chord-name">${ch.name}</div>
+        <div class="chord-notes-label">${ch.notes.map(n=>n.replace(/\d/,'')).join(' – ')}</div>
+        <div class="chord-keys-mini">${miniKeys}</div>
+      </div>`;
+    });
+    bodyHTML += `</div>`;
+  }
+
+  el.innerHTML = `
+    <div class="lesson-card">
+      <div class="lesson-title">${l.title}</div>
+      <div class="lesson-body">${l.content}</div>
+      ${bodyHTML}
+    </div>
+
+    <div class="quiz-section">
+      <div class="quiz-title">Quick check</div>
+      <div class="quiz-question">${l.quiz.q}</div>
+      <div class="quiz-options">
+        ${l.quiz.opts.map(o => `<button class="quiz-opt" onclick="answerQuiz('${o}','${l.quiz.ans}',this)">${o}</button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quiz-fb"></div>
+    </div>
+
+    <div class="lesson-nav">
+      <button class="lesson-btn" onclick="goLesson(${Math.max(0,i-1)})" ${i===0?'disabled':''}>← Previous</button>
+      <button class="lesson-btn primary" onclick="nextLesson(${i})">
+        ${i === lessons.length - 1 ? 'Finish course' : 'Next lesson →'}
+      </button>
+    </div>
+  `;
+}
+
+function playNoteLearn(note, card) {
+  document.querySelectorAll('.note-card').forEach(c => c.classList.remove('note-active'));
+  card.classList.add('note-active');
+  pressKey(note);
+  setTimeout(() => releaseKey(note), 600);
+}
+
+function playChord(notes, card) {
+  document.querySelectorAll('.chord-box').forEach(c => c.classList.remove('chord-active'));
+  card.classList.add('chord-active');
+  notes.forEach(n => { pressKey(n); });
+  setTimeout(() => notes.forEach(n => releaseKey(n)), 1200);
+}
+
+function answerQuiz(selected, correct, btn) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const fb = document.getElementById('quiz-fb');
+  document.querySelectorAll('.quiz-opt').forEach(b => {
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === btn) b.classList.add('wrong');
+  });
+  if (selected === correct) {
+    fb.textContent = '✓ Correct! ' + lessons[currentLesson].quiz.explanation;
+    fb.className = 'quiz-feedback ok';
+    completedLessons.add(currentLesson);
+    buildStepper();
+  } else {
+    fb.textContent = '✗ Not quite. ' + lessons[currentLesson].quiz.explanation;
+    fb.className = 'quiz-feedback bad';
+  }
+}
+
+function nextLesson(i) {
+  completedLessons.add(i);
+  if (i < lessons.length - 1) {
+    goLesson(i + 1);
+  } else {
+    buildStepper();
+    document.getElementById('lesson-content').innerHTML = `
+      <div class="lesson-card" style="text-align:center;padding:3rem 2rem">
+        <div style="font-size:2rem;margin-bottom:12px">🎹</div>
+        <div class="lesson-title">Course complete!</div>
+        <div class="lesson-body" style="margin-bottom:1.5rem">You have covered all the fundamentals. Now the best thing you can do is practice. Head to the <strong>Practice</strong> tab to train your ear, or <strong>Play</strong> to explore.</div>
+        <button class="lesson-btn primary" onclick="showPage('practice')">Go to Practice →</button>
+      </div>`;
+  }
+}
+
+/* ══════════ PRACTICE PAGE ══════════════════════════════════ */
+let currentPractice = 'ear';
+let earScore = 0;
+let earTotal = 0;
+let earAnswer = null;
+
+function selectPractice(type) {
+  currentPractice = type;
+  document.querySelectorAll('.practice-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('pcard-' + type).classList.add('selected');
+  renderPractice(type);
+}
+
+function renderPractice(type) {
+  const panel = document.getElementById('practice-panel');
+  if (type === 'ear') renderEarTraining(panel);
+  else if (type === 'flash') renderFlashcard(panel);
+  else if (type === 'scale') renderScaleBuilder(panel);
+}
+
+const allNotes4 = ['C4','D4','E4','F4','G4','A4','B4','C#4','D#4','F#4','G#4','A#4'];
+const noteNames  = ['C','D','E','F','G','A','B','C♯','D♯','F♯','G♯','A♯'];
+
+function renderEarTraining(panel) {
+  earAnswer = allNotes4[Math.floor(Math.random() * allNotes4.length)];
+  const ansName = earAnswer.replace(/\d/,'').replace('#','♯');
+
+  panel.innerHTML = `
+    <div class="ear-section">
+      <div class="ear-prompt">Listen to the note — which one is it?</div>
+      <button class="lesson-btn" onclick="playEarNote()" style="margin-bottom:1.2rem">▶ Play note</button>
+      <div class="ear-options" id="ear-opts">
+        ${noteNames.map((n,i) => `<button class="ear-opt" onclick="checkEar('${allNotes4[i]}','${n}',this)">${n}</button>`).join('')}
+      </div>
+      <div class="score-bar">
+        Score: <span class="score-val" id="ear-score-val">${earScore}/${earTotal}</span>
+        <button class="lesson-btn" style="margin-left:auto;padding:5px 14px;font-size:0.78rem" onclick="resetEar()">Reset</button>
+      </div>
+    </div>`;
+
+  setTimeout(() => playEarNote(), 400);
+}
+
+function playEarNote() {
+  if (!earAnswer) return;
+  pressKey(earAnswer);
+  setTimeout(() => releaseKey(earAnswer), 700);
+}
+
+function checkEar(note, label, btn) {
+  if (!earAnswer) return;
+  earTotal++;
+  const correct = note === earAnswer;
+  if (correct) { earScore++; btn.classList.add('correct'); }
+  else { btn.classList.add('wrong'); }
+  document.querySelectorAll('.ear-opt').forEach(b => {
+    if (allNotes4[noteNames.indexOf(b.textContent)] === earAnswer) b.classList.add('correct');
+  });
+  document.getElementById('ear-score-val').textContent = `${earScore}/${earTotal}`;
+  setTimeout(() => renderEarTraining(document.getElementById('practice-panel')), 1200);
+}
+
+function resetEar() { earScore = 0; earTotal = 0; renderEarTraining(document.getElementById('practice-panel')); }
+
+function renderFlashcard(panel) {
+  const noteIdx = Math.floor(Math.random() * allNotes4.length);
+  const target = allNotes4[noteIdx];
+  const name = target.replace(/\d/,'').replace('#','♯');
+
+  panel.innerHTML = `
+    <div class="ear-section">
+      <div style="text-align:center;padding:1rem 0">
+        <div style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Find this key</div>
+        <div style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;color:var(--ebony)">${name}</div>
+        <div style="font-size:0.8rem;color:#aaa;margin-top:4px">Click it on the piano in the Play tab</div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:10px;justify-content:center">
+        <button class="lesson-btn primary" onclick="showFlashHint('${target}')">Show hint</button>
+        <button class="lesson-btn" onclick="renderFlashcard(document.getElementById('practice-panel'))">Next card</button>
+      </div>
+      <div id="flash-hint" style="margin-top:1rem;text-align:center;font-size:0.85rem;color:var(--muted)"></div>
+    </div>`;
+}
+
+function showFlashHint(note) {
+  const octave = note.slice(-1);
+  const name = note.replace(/\d/,'').replace('#','♯');
+  document.getElementById('flash-hint').innerHTML = `${name} is in octave ${octave}. The key keyboard shortcut is <strong>${kbdRevMap[note] || '—'}</strong>. Try pressing it!`;
+  pressKey(note);
+  setTimeout(() => releaseKey(note), 600);
+}
+
+const majorScales = {
+  'C': ['C','D','E','F','G','A','B','C'],
+  'G': ['G','A','B','C','D','E','F♯','G'],
+  'D': ['D','E','F♯','G','A','B','C♯','D'],
+  'F': ['F','G','A','B♭','C','D','E','F'],
+  'A minor': ['A','B','C','D','E','F','G','A'],
+};
+
+function renderScaleBuilder(panel) {
+  const keys = Object.keys(majorScales);
+  panel.innerHTML = `
+    <div class="ear-section">
+      <div class="ear-prompt">Choose a scale to see and hear it</div>
+      <div class="ear-options" style="margin-bottom:1.2rem">
+        ${keys.map(k => `<button class="ear-opt" style="width:auto;padding:8px 18px" onclick="showScale('${k}',this)">${k}</button>`).join('')}
+      </div>
+      <div id="scale-display"></div>
+    </div>`;
+}
+
+function showScale(key, btn) {
+  document.querySelectorAll('#practice-panel .ear-opt').forEach(b => b.classList.remove('correct'));
+  btn.classList.add('correct');
+  const notes = majorScales[key];
+  const el = document.getElementById('scale-display');
+  el.innerHTML = `
+    <div class="scale-row" style="flex-wrap:wrap">
+      ${notes.map((n,i) => `<div class="scale-note${i===0||i===notes.length-1?' root':''}" style="cursor:pointer;font-size:0.85rem" onclick="pressKey('${noteToKey(n,4)}')">${n}</div>${i<notes.length-1?'<div class="scale-arrow">→</div>':''}`).join('')}
+    </div>
+    <button class="lesson-btn primary" style="margin-top:1rem" onclick="playScaleAudio('${key}')">▶ Play scale</button>`;
+}
+
+function noteToKey(name, oct) {
+  return name.replace('♯','#').replace('♭','b') + oct;
+}
+
+function playScaleAudio(key) {
+  const names = majorScales[key];
+  let delay = 0;
+  names.forEach(n => {
+    const note = noteToKey(n, 4);
+    setTimeout(() => { pressKey(note); setTimeout(() => releaseKey(note), 280); }, delay);
+    delay += 320;
+  });
+}
+
+/* ══════════ PAGE SWITCHING ══════════════════════════════ */
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = ['play','learn','practice'];
+  tabs[map.indexOf(name)]?.classList.add('active');
+}
+
+/* ══════════ INIT ══════════════════════════════════════ */
+buildPiano();
+buildSongs();
+buildLearnPage();
+renderPractice('ear');
+</script>
+</body>
+</html>
