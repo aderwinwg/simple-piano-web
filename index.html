@@ -1000,7 +1000,7 @@ function stopNote(note) {
 function stopAll() {
   Object.keys(activeOscillators).forEach(n => stopNote(n));
   document.querySelectorAll('.key-white.pressed,.key-black.pressed').forEach(k => k.classList.remove('pressed'));
-  if (songInterval) { clearInterval(songInterval); songInterval = null; }
+  if (songInterval) { clearTimeout(songInterval); songInterval = null; }
   if (currentSongBtn) { currentSongBtn.classList.remove('playing'); currentSongBtn = null; }
 }
 
@@ -1104,7 +1104,7 @@ function buildSongs() {
 }
 
 function playSong(name, btn) {
-  if (songInterval) { clearInterval(songInterval); songInterval = null; }
+  if (songInterval) { clearTimeout(songInterval); songInterval = null; }
   if (currentSongBtn) { currentSongBtn.classList.remove('playing'); }
   stopAll();
   if (currentSongBtn === btn) { currentSongBtn = null; return; }
@@ -1132,7 +1132,7 @@ function playSong(name, btn) {
       const el = document.getElementById('key-' + note.replace('#','s'));
       if (el) el.classList.remove('pressed');
     }, dur * 0.85);
-    setTimeout(playNext, dur);
+    songInterval = setTimeout(playNext, dur);
   }
 
   playNext();
