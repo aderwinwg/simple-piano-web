@@ -1,4 +1,4 @@
-# Simple Piano Web
+# [Simple Piano](https://aderwinwg.github.io/simple-piano-web/)
 
 An interactive web-based piano application designed for learning basic piano skills. Play notes, explore demo songs, and work through structured lessons to build your musical foundation.
 
